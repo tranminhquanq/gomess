@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tranminhquanq/gomess/internal/app/handler"
 	"github.com/tranminhquanq/gomess/internal/config"
+	"github.com/tranminhquanq/gomess/internal/storage"
+	"github.com/tranminhquanq/gomess/internal/utils"
 )
 
 const (
@@ -31,21 +33,31 @@ func serve(ctx context.Context) {
 		logrus.WithError(err).Fatal("unable to load config")
 	}
 
-	config, err := config.LoadGlobalFromEnv()
+	globalConfig, err := config.LoadGlobalFromEnv()
 	if err != nil {
 		logrus.WithError(err).Fatal("unable to load config")
 	}
 
-	addr := net.JoinHostPort(config.API.Host, config.API.Port)
+	db, err := storage.Dial(globalConfig)
+	if err != nil {
+		logrus.Fatalf("error opening database: %+v", err)
+	}
+	defer db.Close()
+
+	addr := net.JoinHostPort(globalConfig.API.Host, globalConfig.API.Port)
+	logrus.Infof("GoMess API started on: %s", addr)
+
+	opts := []handler.Option{}
+	hdl := handler.NewHandlerWithVersion(globalConfig, db, utils.Version, opts...)
 
 	baseCtx, baseCancel := context.WithCancel(context.Background())
 	defer baseCancel()
 
 	httpServer := &http.Server{
 		Addr:              addr,
-		Handler:           handler.NewHandler(config, "1.0.0"), // Version is hardcoded for now
+		Handler:           hdl,
 		ReadHeaderTimeout: SlowlorisTimeout,
-		BaseContext: func(l net.Listener) context.Context {
+		BaseContext: func(net.Listener) context.Context {
 			return baseCtx
 		},
 	}
