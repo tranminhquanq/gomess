@@ -62,7 +62,7 @@ func NewHandlerWithVersion(
 	corsHandler := cors.New(cors.Options{
 		AllowedMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
 		AllowedHeaders: api.globalConfig.CORS.AllAllowedHeaders([]string{"Accept", "Authorization", "Content-Type", "X-Client-IP", "X-Client-Info", audHeaderName}),
-		// ExposedHeaders:   []string{"X-Total-Count", "Link", ""},
+		ExposedHeaders:   []string{"X-Total-Count"},
 		AllowCredentials: true,
 	})
 
