@@ -6,7 +6,7 @@ import "github.com/tranminhquanq/gomess/internal/app/domain"
 type UserFactory struct{}
 
 func (u UserFactory) CreateUser(
-	id int,
+	id string,
 	name string,
 	email string,
 ) domain.User {

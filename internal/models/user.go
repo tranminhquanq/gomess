@@ -80,3 +80,12 @@ func (u *User) IsEmailConfirmed() bool {
 func (u *User) IsPhoneConfirmed() bool {
 	return u.PhoneConfirmedAt != nil
 }
+
+func (u *User) GetName() string {
+	if name, ok := u.AppMetaData["name"]; ok {
+		if strName, ok := name.(string); ok {
+			return strName
+		}
+	}
+	return "unknown"
+}
