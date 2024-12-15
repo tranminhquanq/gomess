@@ -95,9 +95,11 @@ func (c *DBConfiguration) Validate() error {
 
 // GlobalConfiguration holds all the configuration that applies to all instances.
 type GlobalConfiguration struct {
-	API  APIConfiguration
-	CORS CORSConfiguration
-	DB   DBConfiguration
+	API     APIConfiguration
+	CORS    CORSConfiguration
+	DB      DBConfiguration
+	Tracing TracingConfig
+	Metrics MetricsConfig
 }
 
 // ApplyDefaults sets defaults for a GlobalConfiguration
@@ -112,6 +114,8 @@ func (c *GlobalConfiguration) Validate() error {
 	}{
 		&c.API,
 		&c.DB,
+		&c.Tracing,
+		&c.Metrics,
 	}
 
 	for _, validatable := range validatables {

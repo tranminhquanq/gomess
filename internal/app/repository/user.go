@@ -18,6 +18,10 @@ func NewUserRepository(db *storage.Connection) UserRepositoryImpl {
 	return UserRepositoryImpl{db: db}
 }
 
+func (repo UserRepositoryImpl) SaveUser(user domain.User) domain.User {
+	return user
+}
+
 func (repo UserRepositoryImpl) FindUser() domain.User {
 	return userFactory.CreateUser(1, "John Doe", "john.doe@exampl.com")
 }
