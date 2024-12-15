@@ -51,9 +51,14 @@ func NewHandlerWithVersion(
 	r.UseBypass(recoverer)
 
 	userRepository := repository.NewUserRepository(db)
-	userHandler := NewUserHandler(usecase.NewUserUsecase(userRepository))
+	userUsecase := usecase.NewUserUsecase(userRepository)
+	userHandler := NewUserHandler(userUsecase)
+
+	wsHandler := NewWSHandler(userUsecase)
 
 	r.Get("/health", api.HealthCheck)
+	r.Get("/ws", wsHandler.HandleWS)
+
 	r.Route("/api", func(r *router) {
 		r.Get("/users", userHandler.GetUsers)
 		r.Get("/user", userHandler.GetUser)
