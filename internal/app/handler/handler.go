@@ -6,6 +6,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/sebest/xff"
 	"github.com/tranminhquanq/gomess/internal/app/repository"
+	"github.com/tranminhquanq/gomess/internal/app/usecase"
 	"github.com/tranminhquanq/gomess/internal/config"
 	"github.com/tranminhquanq/gomess/internal/storage"
 )
@@ -13,10 +14,6 @@ import (
 const (
 	audHeaderName  = "X-JWT-AUD"
 	defaultVersion = "unknown version"
-)
-
-var (
-	userRepository = repository.UserRepositoryImpl{}
 )
 
 type Option interface {
@@ -53,15 +50,18 @@ func NewHandlerWithVersion(
 	r.UseBypass(xffmw.Handler)
 	r.UseBypass(recoverer)
 
+	userRepository := repository.NewUserRepository(db)
+	userHandler := NewUserHandler(usecase.NewUserUsecase(userRepository))
+
 	r.Get("/health", api.HealthCheck)
 	r.Route("/api", func(r *router) {
-		// r.Get("/users", api.GetUsers)
-		// r.Get("/user", api.GetUser)
+		r.Get("/users", userHandler.GetUsers)
+		r.Get("/user", userHandler.GetUser)
 	})
 
 	corsHandler := cors.New(cors.Options{
-		AllowedMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
-		AllowedHeaders: api.globalConfig.CORS.AllAllowedHeaders([]string{"Accept", "Authorization", "Content-Type", "X-Client-IP", "X-Client-Info", audHeaderName}),
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+		AllowedHeaders:   api.globalConfig.CORS.AllAllowedHeaders([]string{"Accept", "Authorization", "Content-Type", "X-Client-IP", "X-Client-Info", audHeaderName}),
 		ExposedHeaders:   []string{"X-Total-Count"},
 		AllowCredentials: true,
 	})

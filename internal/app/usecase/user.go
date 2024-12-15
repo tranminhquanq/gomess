@@ -5,20 +5,30 @@ import (
 	"github.com/tranminhquanq/gomess/internal/app/domain/repository"
 )
 
-func UserDetails(repo repository.UserRepository) (domain.User, error) {
-	return repo.FindUser(), nil
+type UserUsecase struct {
+	repository repository.UserRepository
 }
 
-func UsersWithPagination(repo repository.UserRepository) (interface{}, error) {
-	users, totalCount := repo.FindUsersWithPagination()
+func NewUserUsecase(repository repository.UserRepository) *UserUsecase {
+	return &UserUsecase{
+		repository: repository,
+	}
+}
+
+func (u *UserUsecase) UserDetails() (domain.User, error) {
+	return u.repository.FindUser(), nil
+}
+
+func (u *UserUsecase) UsersWithPagination() (interface{}, error) {
+	users, totalCount := u.repository.FindUsersWithPagination()
 
 	return NewPaginationResponse(users, NewPaginationMeta(totalCount, 1, 10)), nil
 }
 
-func PartialUpdateUser(repo repository.UserRepository, user domain.User) (domain.User, error) {
-	return repo.UpdateUser(user), nil
+func (u *UserUsecase) PartialUpdateUser(user domain.User) (domain.User, error) {
+	return u.repository.UpdateUser(user), nil
 }
 
-func UpdateUserStatus(repo repository.UserRepository) (interface{}, error) {
+func (u *UserUsecase) UpdateUserStatus() (interface{}, error) {
 	return nil, nil
 }

@@ -6,8 +6,19 @@ import (
 	"github.com/tranminhquanq/gomess/internal/app/usecase"
 )
 
-func (hdl *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) error {
-	user, err := usecase.UserDetails(userRepository)
+type UserHandler struct {
+	userUsecase *usecase.UserUsecase
+	// TODO: Add other usecases here
+}
+
+func NewUserHandler(userUsecase *usecase.UserUsecase) *UserHandler {
+	return &UserHandler{
+		userUsecase: userUsecase,
+	}
+}
+
+func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) error {
+	user, err := h.userUsecase.UserDetails()
 	if err != nil {
 		return sendJSON(w, http.StatusInternalServerError, err)
 	}
@@ -15,8 +26,8 @@ func (hdl *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) error {
 	return sendJSON(w, http.StatusOK, user)
 }
 
-func (hdl *APIHandler) GetUsers(w http.ResponseWriter, r *http.Request) error {
-	users, err := usecase.UsersWithPagination(userRepository)
+func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) error {
+	users, err := h.userUsecase.UsersWithPagination()
 	if err != nil {
 		return sendJSON(w, http.StatusInternalServerError, err)
 	}
