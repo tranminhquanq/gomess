@@ -27,10 +27,13 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) error {
-	users, err := h.userUsecase.UsersWithPagination()
+	page := 1   // TODO: Get page from query parameter
+	limit := 10 // TODO: Get limit from query parameter
+
+	result, err := h.userUsecase.UsersWithPagination()
 	if err != nil {
 		return sendJSON(w, http.StatusInternalServerError, err)
 	}
 
-	return sendJSON(w, http.StatusOK, users)
+	return sendJSON(w, http.StatusOK, NewPaginationResponse(result.Items, NewPaginationMeta(result.Count, int64(page), int64(limit))))
 }

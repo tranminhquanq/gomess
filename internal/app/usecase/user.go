@@ -16,17 +16,15 @@ func NewUserUsecase(repository repository.UserRepository) *UserUsecase {
 }
 
 func (u *UserUsecase) UserDetails() (domain.User, error) {
-	return u.repository.FindUser(), nil
+	return u.repository.FindUser()
 }
 
-func (u *UserUsecase) UsersWithPagination() (interface{}, error) {
-	users, totalCount := u.repository.FindUsersWithPagination()
-
-	return NewPaginationResponse(users, NewPaginationMeta(totalCount, 1, 10)), nil
+func (u *UserUsecase) UsersWithPagination() (domain.ListResult[domain.User], error) {
+	return u.repository.FindUsersWithPagination()
 }
 
 func (u *UserUsecase) PartialUpdateUser(user domain.User) (domain.User, error) {
-	return u.repository.UpdateUser(user), nil
+	return u.repository.UpdateUser(user)
 }
 
 func (u *UserUsecase) UpdateUserStatus() (interface{}, error) {

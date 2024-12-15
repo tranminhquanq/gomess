@@ -1,4 +1,4 @@
-package usecase
+package handler
 
 type PaginationMeta struct {
 	ItemCount  int64 `json:"item_count"`
