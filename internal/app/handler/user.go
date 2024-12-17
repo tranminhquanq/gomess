@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/tranminhquanq/gomess/internal/app/usecase"
+	"github.com/tranminhquanq/gomess/internal/utils"
 )
 
 type UserHandler struct {
@@ -27,13 +28,14 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) error {
-	page := 1   // TODO: Get page from query parameter
-	limit := 10 // TODO: Get limit from query parameter
+	// filters := utils.ExtractFilterQuery(r)
+	// sorts := utils.ExtractSortQuery(r)
+	page, limit := utils.ParsePagination(r)
 
-	result, err := h.userUsecase.UsersWithPagination()
+	result, err := h.userUsecase.UsersWithPagination() // TODO: Add pagination
 	if err != nil {
 		return sendJSON(w, http.StatusInternalServerError, err)
 	}
 
-	return sendJSON(w, http.StatusOK, NewPaginationResponse(result.Items, NewPaginationMeta(result.Count, int64(page), int64(limit))))
+	return sendJSON(w, http.StatusOK, NewPaginationResponse(result.Items, NewPaginationMeta(result.Count, page, limit)))
 }

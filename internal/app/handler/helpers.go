@@ -22,15 +22,15 @@ func sendJSON(w http.ResponseWriter, status int, obj interface{}) error {
 type PaginationMeta struct {
 	ItemCount  int64 `json:"item_count"`
 	TotalPages int64 `json:"total_pages"`
-	Page       int64 `json:"page"`
-	Limit      int64 `json:"limit"`
+	Page       int   `json:"page"`
+	Limit      int   `json:"limit"`
 	HasNext    bool  `json:"has_next"`
 	HasPrev    bool  `json:"has_prev"`
 }
 
-func NewPaginationMeta(totalCount, page, limit int64) PaginationMeta {
-	totalPages := totalCount / limit
-	if totalCount%limit > 0 {
+func NewPaginationMeta(totalCount int64, page, limit int) PaginationMeta {
+	totalPages := totalCount / int64(limit)
+	if totalCount%int64(limit) > 0 {
 		totalPages++
 	}
 
@@ -39,7 +39,7 @@ func NewPaginationMeta(totalCount, page, limit int64) PaginationMeta {
 		TotalPages: totalPages,
 		Page:       page,
 		Limit:      limit,
-		HasNext:    page < totalPages,
+		HasNext:    int64(page) < totalPages,
 		HasPrev:    page > 1,
 	}
 }
