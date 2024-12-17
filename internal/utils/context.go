@@ -19,3 +19,8 @@ func GetRequestID(ctx context.Context) string {
 	}
 	return obj.(string)
 }
+
+// WithRequestID adds the provided request ID to the context.
+func WithRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, requestIDKey, id)
+}

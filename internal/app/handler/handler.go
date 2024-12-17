@@ -5,9 +5,11 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/sebest/xff"
+	"github.com/sirupsen/logrus"
 	"github.com/tranminhquanq/gomess/internal/app/repository"
 	"github.com/tranminhquanq/gomess/internal/app/usecase"
 	"github.com/tranminhquanq/gomess/internal/config"
+	"github.com/tranminhquanq/gomess/internal/observability"
 	"github.com/tranminhquanq/gomess/internal/storage"
 )
 
@@ -44,11 +46,19 @@ func NewHandlerWithVersion(
 	}
 
 	xffmw, _ := xff.Default()
+	logger := observability.NewStructuredLogger(logrus.StandardLogger(), globalConfig)
 
 	r := newRouter()
 
+	r.UseBypass(observability.AddRequestID(globalConfig))
+	r.UseBypass(logger)
 	r.UseBypass(xffmw.Handler)
 	r.UseBypass(recoverer)
+
+	// request tracing should be added only when tracing or metrics is enabled
+	// if globalConfig.Tracing.Enabled || globalConfig.Metrics.Enabled {
+	// 	r.UseBypass(observability.RequestTracing())
+	// }
 
 	userRepository := repository.NewUserRepository(db)
 	userUsecase := usecase.NewUserUsecase(userRepository)

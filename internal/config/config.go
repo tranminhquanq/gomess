@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobwas/glob"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -100,6 +101,10 @@ type GlobalConfiguration struct {
 	DB      DBConfiguration
 	Tracing TracingConfig
 	Metrics MetricsConfig
+
+	SiteURL         string   `json:"site_url" split_words:"true" required:"true"`
+	URIAllowList    []string `json:"uri_allow_list" split_words:"true"`
+	URIAllowListMap map[string]glob.Glob
 }
 
 // ApplyDefaults sets defaults for a GlobalConfiguration

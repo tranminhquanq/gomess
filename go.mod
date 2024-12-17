@@ -4,8 +4,10 @@ go 1.22.4
 
 require (
 	github.com/XSAM/otelsql v0.35.0
+	github.com/bombsimon/logrusr/v3 v3.1.0
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/gobuffalo/pop/v6 v6.1.1
+	github.com/gobwas/glob v0.2.3
 	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/gorilla/websocket v1.5.3
 	github.com/jmoiron/sqlx v1.3.5
@@ -16,6 +18,7 @@ require (
 	github.com/sebest/xff v0.0.0-20210106013422-671bd2870b3a
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
+	go.opentelemetry.io/otel v1.31.0
 )
 
 require (
@@ -56,7 +59,6 @@ require (
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	go.opentelemetry.io/otel v1.31.0 // indirect
 	go.opentelemetry.io/otel/metric v1.31.0 // indirect
 	go.opentelemetry.io/otel/trace v1.31.0 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
