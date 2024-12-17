@@ -22,7 +22,7 @@ func (u *UserUsecase) UserDetails() (domain.User, error) {
 }
 
 func (u *UserUsecase) UsersWithPagination() (domain.ListResult[domain.User], error) {
-	return u.repository.FindUsersWithPagination()
+	return u.repository.FindWithPagination()
 }
 
 func (u *UserUsecase) PartialUpdateUser(user domain.User) (domain.User, error) {

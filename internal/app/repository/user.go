@@ -45,7 +45,7 @@ func (repo *UserRepositoryImpl) UpdateUser(user domain.User) (domain.User, error
 	return user, nil
 }
 
-func (repo *UserRepositoryImpl) FindUsersWithPagination() (domain.ListResult[domain.User], error) {
+func (repo *UserRepositoryImpl) FindWithPagination() (domain.ListResult[domain.User], error) {
 	users := []domain.User{
 		userFactory.CreateUser("1", "John Doe", "john.doe@exampl.com"),
 		userFactory.CreateUser("2", "Quang Tran", "quang.tran@example.com"),
