@@ -55,10 +55,14 @@ func NewHandlerWithVersion(
 	r.UseBypass(xffmw.Handler)
 	r.UseBypass(recoverer)
 
+	if globalConfig.API.MaxRequestDuration > 0 {
+		r.UseBypass(timeoutMiddleware(globalConfig.API.MaxRequestDuration))
+	}
+
 	// request tracing should be added only when tracing or metrics is enabled
-	// if globalConfig.Tracing.Enabled || globalConfig.Metrics.Enabled {
-	// 	r.UseBypass(observability.RequestTracing())
-	// }
+	if globalConfig.Tracing.Enabled || globalConfig.Metrics.Enabled {
+		r.UseBypass(observability.RequestTracing())
+	}
 
 	userRepository := repository.NewUserRepository(db)
 
