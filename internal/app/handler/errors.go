@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"runtime/debug"
 
 	"github.com/sirupsen/logrus"
+	"github.com/tranminhquanq/gomess/internal/observability"
 	"github.com/tranminhquanq/gomess/internal/utils"
 )
 
@@ -85,19 +88,18 @@ func recoverer(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rcv := recover(); rcv != nil {
-				// logEntry := observability.GetLogEntry(r)
-				// if logEntry != nil {
-				// 	logEntry.Panic(rvr, debug.Stack())
-				// } else {
-				// 	fmt.Fprintf(os.Stderr, "Panic: %+v\n", rvr)
-				// 	debug.PrintStack()
-				// }
+				logEntry := observability.GetLogEntry(r)
+				if logEntry != nil {
+					logEntry.Panic(rcv, debug.Stack())
+				} else {
+					fmt.Fprintf(os.Stderr, "Panic: %+v\n", rcv)
+					debug.PrintStack()
+				}
 
-				se := &HTTPError{
+				HandleResponseError(&HTTPError{
 					HTTPStatus: http.StatusInternalServerError,
 					Message:    http.StatusText(http.StatusInternalServerError),
-				}
-				HandleResponseError(se, w, r)
+				}, w, r)
 			}
 		}()
 		next.ServeHTTP(w, r)
