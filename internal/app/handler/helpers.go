@@ -19,6 +19,13 @@ func sendJSON(w http.ResponseWriter, status int, obj interface{}) error {
 	return err
 }
 
+func sendText(w http.ResponseWriter, status int, text string) error {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(status)
+	_, err := w.Write([]byte(text))
+	return err
+}
+
 type PaginationMeta struct {
 	ItemCount  int64 `json:"item_count"`
 	TotalPages int64 `json:"total_pages"`

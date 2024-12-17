@@ -62,16 +62,28 @@ func NewHandlerWithVersion(
 
 	userRepository := repository.NewUserRepository(db)
 	userUsecase := usecase.NewUserUsecase(userRepository)
-	userHandler := NewUserHandler(userUsecase)
 
 	wsHandler := NewWSHandler(userUsecase)
+	authHandler := NewAuthHandler(userUsecase)
+	userHandler := NewUserHandler(userUsecase)
 
 	r.Get("/health", api.HealthCheck)
 	r.Get("/ws", wsHandler.HandleWS)
 
 	r.Route("/api", func(r *router) {
-		r.Get("/users", userHandler.GetUsers)
-		r.Get("/user", userHandler.GetUser)
+		r.Route("/auth", func(r *router) {
+			r.Post("/login", authHandler.Login)
+			r.Post("/register", authHandler.Register)
+			r.Post("/logout", authHandler.Logout)
+			r.Post("/refresh", authHandler.Refresh)
+			r.Post("/forgot-password", authHandler.ForgotPassword)
+		})
+
+		r.Route("/users", func(r *router) {
+			r.Get("", userHandler.GetUsers)
+			r.Get("/:id", userHandler.GetUser)
+			r.Get("/me", userHandler.GetCurrentUser)
+		})
 	})
 
 	corsHandler := cors.New(cors.Options{

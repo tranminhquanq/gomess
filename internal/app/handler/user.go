@@ -18,15 +18,6 @@ func NewUserHandler(userUsecase *usecase.UserUsecase) *UserHandler {
 	}
 }
 
-func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) error {
-	user, err := h.userUsecase.UserDetails()
-	if err != nil {
-		return sendJSON(w, http.StatusInternalServerError, err)
-	}
-
-	return sendJSON(w, http.StatusOK, user)
-}
-
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) error {
 	// filters := utils.ExtractFilterQuery(r)
 	// sorts := utils.ExtractSortQuery(r)
@@ -38,4 +29,22 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return sendJSON(w, http.StatusOK, NewPaginationResponse(result.Items, NewPaginationMeta(result.Count, page, limit)))
+}
+
+func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) error {
+	user, err := h.userUsecase.UserDetails()
+	if err != nil {
+		return sendJSON(w, http.StatusInternalServerError, err)
+	}
+
+	return sendJSON(w, http.StatusOK, user)
+}
+
+func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) error {
+	user, err := h.userUsecase.UserDetails()
+	if err != nil {
+		return sendJSON(w, http.StatusInternalServerError, err)
+	}
+
+	return sendJSON(w, http.StatusOK, user)
 }
