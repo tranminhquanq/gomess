@@ -77,10 +77,10 @@ func ParseSort(r *http.Request) (sorts []Sort) {
 		if key == "sort" {
 			for _, value := range values {
 				parts := strings.Split(value, ":")
-				if len(parts) >= 2 { // field:order
+				if len(parts) == 2 { // field:order
 					sorts = append(sorts, Sort{
 						Field: parts[0],
-						Order: strings.Join(parts[1:], ":"), // in case the order contains ":"
+						Order: parts[1],
 					})
 				}
 			}
