@@ -61,10 +61,12 @@ func NewHandlerWithVersion(
 	// }
 
 	userRepository := repository.NewUserRepository(db)
+
+	authUsecase := usecase.NewAuthUsecase(userRepository)
 	userUsecase := usecase.NewUserUsecase(userRepository)
 
 	wsHandler := NewWSHandler(userUsecase)
-	authHandler := NewAuthHandler(userUsecase)
+	authHandler := NewAuthHandler(authUsecase, userUsecase)
 	userHandler := NewUserHandler(userUsecase)
 
 	r.Get("/health", api.HealthCheck)
