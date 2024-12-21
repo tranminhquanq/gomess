@@ -19,17 +19,17 @@ const (
 )
 
 type Option interface {
-	apply(*APIHandler)
+	apply(*Handler)
 }
 
-type APIHandler struct {
+type Handler struct {
 	handler      http.Handler
 	db           *storage.Connection
 	globalConfig *config.GlobalConfiguration
 	version      string
 }
 
-func NewHandler(globalConfig *config.GlobalConfiguration, db *storage.Connection, opt ...Option) *APIHandler {
+func NewHandler(globalConfig *config.GlobalConfiguration, db *storage.Connection, opt ...Option) *Handler {
 	return NewHandlerWithVersion(globalConfig, db, defaultVersion, opt...)
 }
 
@@ -38,8 +38,8 @@ func NewHandlerWithVersion(
 	db *storage.Connection,
 	version string,
 	opt ...Option,
-) *APIHandler {
-	api := &APIHandler{
+) *Handler {
+	api := &Handler{
 		globalConfig: globalConfig,
 		db:           db,
 		version:      version,
@@ -69,12 +69,11 @@ func NewHandlerWithVersion(
 	authUsecase := usecase.NewAuthUsecase(userRepository)
 	userUsecase := usecase.NewUserUsecase(userRepository)
 
-	wsHandler := NewWSHandler(userUsecase)
+	wsHandler := NewWsHandler(userUsecase)
 	authHandler := NewAuthHandler(authUsecase, userUsecase)
 	userHandler := NewUserHandler(userUsecase)
 
 	r.Get("/health", api.HealthCheck)
-	r.Get("/ws", wsHandler.HandleWS)
 
 	r.Route("/api", func(r *router) {
 		r.Route("/auth", func(r *router) {
@@ -99,15 +98,21 @@ func NewHandlerWithVersion(
 		AllowCredentials: true,
 	})
 
-	api.handler = corsHandler.Handler(r)
+	api.handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == "/ws" {
+			wsHandler.ServeWs(w, req)
+		} else {
+			corsHandler.Handler(r).ServeHTTP(w, req)
+		}
+	})
 
 	return api
 }
 
 // ServeHTTP implements the http.Handler interface by passing the request along
 // to its underlying Handler.
-func (hdl *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	hdl.handler.ServeHTTP(w, r)
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.handler.ServeHTTP(w, r)
 }
 
 type HealthCheckResponse struct {
@@ -116,7 +121,7 @@ type HealthCheckResponse struct {
 	Description string `json:"description"`
 }
 
-func (h *APIHandler) HealthCheck(w http.ResponseWriter, r *http.Request) error {
+func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) error {
 	return sendJSON(w, http.StatusOK, HealthCheckResponse{
 		Version:     h.version,
 		Name:        "GoMess",
