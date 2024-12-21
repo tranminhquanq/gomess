@@ -21,6 +21,8 @@ func NewWSHandler(userUsecase *usecase.UserUsecase) *WSHandler {
 		clients:     make(map[*websocket.Conn]bool),
 		broadcast:   make(chan []byte),
 		upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
 			CheckOrigin: func(r *http.Request) bool {
 				// Allow requests from any origin
 				return true
