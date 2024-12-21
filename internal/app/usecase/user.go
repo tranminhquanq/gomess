@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"context"
+
 	"github.com/gofrs/uuid"
 	"github.com/tranminhquanq/gomess/internal/app/domain"
 	"github.com/tranminhquanq/gomess/internal/app/domain/repository"
@@ -31,4 +33,9 @@ func (u *UserUsecase) PartialUpdateUser(user domain.User) (domain.User, error) {
 
 func (u *UserUsecase) UpdateUserStatus() (interface{}, error) {
 	return nil, nil
+}
+
+func (u *UserUsecase) GetUserFromToken(ctx context.Context) (domain.User, error) {
+	userId := ctx.Value("userId").(string)
+	return u.repository.FindUserById(uuid.FromStringOrNil(userId))
 }

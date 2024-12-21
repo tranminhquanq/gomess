@@ -69,7 +69,7 @@ func NewHandlerWithVersion(
 	authUsecase := usecase.NewAuthUsecase(userRepository)
 	userUsecase := usecase.NewUserUsecase(userRepository)
 
-	wsHandler := NewWsHandler(userUsecase)
+	wsHandler := NewWsHandler(globalConfig, userUsecase)
 	authHandler := NewAuthHandler(authUsecase, userUsecase)
 	userHandler := NewUserHandler(userUsecase)
 

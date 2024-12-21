@@ -2,10 +2,13 @@ package handler
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+	"github.com/tranminhquanq/gomess/internal/app/domain"
 	"github.com/tranminhquanq/gomess/internal/app/usecase"
+	"github.com/tranminhquanq/gomess/internal/config"
 )
 
 type WsAction string
@@ -39,19 +42,28 @@ type WsResponse struct {
 	Error     *WsError    `json:"error"`     // Error details if status is "error"
 }
 
+type WsClient struct {
+	ID   string
+	Conn *websocket.Conn
+	User domain.User
+}
+
 type WsHandler struct {
-	userUsecase *usecase.UserUsecase
-	clients     map[*websocket.Conn]bool // Keep track of active clients
-	broadcast   chan []byte              // Broadcast channel for messages
-	upgrader    websocket.Upgrader
+	userUsecase  *usecase.UserUsecase
+	serverId     string
+	localClients sync.Map // Stores active connections on this server
+	upgrader     websocket.Upgrader
+	// redisClient *redis.Client
 }
 
 // NewWsHandler creates a new WebSocket handler
-func NewWsHandler(userUsecase *usecase.UserUsecase) *WsHandler {
+func NewWsHandler(
+	globalConfig *config.GlobalConfiguration,
+	userUsecase *usecase.UserUsecase) *WsHandler {
 	return &WsHandler{
-		userUsecase: userUsecase,
-		clients:     make(map[*websocket.Conn]bool),
-		broadcast:   make(chan []byte),
+		userUsecase:  userUsecase,
+		serverId:     globalConfig.API.ID,
+		localClients: sync.Map{},
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -72,50 +84,122 @@ func (h *WsHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// Register new client
-	h.clients[conn] = true
-	logrus.Info("New WebSocket connection opened")
+	user, err := h.userUsecase.GetUserFromToken(r.Context())
+	if err != nil {
+		logrus.WithError(err).Error("Error getting user from token")
+		http.Error(w, "Could not authenticate user", http.StatusUnauthorized)
+		return err
+	}
 
-	go h.handleConnection(conn)
-	go h.handleBroadcast()
+	client := &WsClient{ID: user.ID, Conn: conn, User: user}
+	h.localClients.Store(client.ID, client)
+	// h.registerClientInRedis(client.Id, h.serverID)
+
+	go h.HandleIncomingMessages(client)
 
 	return nil
 }
 
-// handleConnection reads messages from the WebSocket connection
-func (h *WsHandler) handleConnection(conn *websocket.Conn) {
+func (h *WsHandler) handleCloseConnection(client *WsClient) {
+	client.Conn.Close()
+	h.localClients.Delete(client.ID)
+
+	// Unregister client from Redis
+	// h.unregisterClientFromRedis(client.ID)
+}
+
+func (h *WsHandler) HandleIncomingMessages(client *WsClient) {
 	defer func() {
-		conn.Close()
-		delete(h.clients, conn)
-		logrus.Info("WebSocket connection closed")
+		h.handleCloseConnection(client)
 	}()
 
 	for {
-		_, msg, err := conn.ReadMessage()
+		_, msg, err := client.Conn.ReadMessage()
 		if err != nil {
 			logrus.WithError(err).Error("Error reading message from WebSocket")
-			break
+			return
 		}
-
-		logrus.Infof("Received message: %s", msg)
-
-		// Process and validate the message, then add it to the broadcast channel
-		h.broadcast <- msg
+		// TODO: You can parse the message and take appropriate actions based on the action type.
+		// For now, i just broadcast the message to all local clients.
+		go h.Broadcast2AllLocalClients(client.ID, msg)
 	}
 }
 
-// handleBroadcast sends messages to all connected clients
-func (h *WsHandler) handleBroadcast() {
-	for {
-		msg := <-h.broadcast
+func (h *WsHandler) Broadcast2AllLocalClients(clientId string, message []byte) {
+	h.localClients.Range(func(key, value interface{}) bool {
+		client, ok := value.(*WsClient)
+		if !ok || client == nil {
+			logrus.Error(("Invalid client in localClients map"))
+			return true // Continue to the next client
+		}
 
-		for client := range h.clients {
-			err := client.WriteMessage(websocket.TextMessage, msg)
+		if client.ID != clientId { // Avoid sending to the sender
+			err := client.Conn.WriteMessage(websocket.TextMessage, message)
 			if err != nil {
 				logrus.WithError(err).Error("Error writing message to WebSocket")
-				client.Close()
-				delete(h.clients, client)
+				return false // Stop iterating over clients
 			}
 		}
-	}
+		return true
+	})
+
+	// Publish message to Redis
+	// publishToRedis(clientId, message)
 }
+
+// func (h *WsHandler) broadcastMessage2SpecificClients(clientIds []string, message []byte) {
+// 	for _, clientId := range clientIds {
+// 		client, ok := h.localClients.Load(clientId)
+// 		if !ok {
+// 			logrus.Errorf("Client not found in localClients map: %s", clientId)
+// 			continue
+// 		}
+
+// 		c, ok := client.(*WsClient)
+// 		if !ok || c == nil {
+// 			logrus.Error(("Invalid client in localClients map"))
+// 			continue
+// 		}
+
+// 		err := c.Conn.WriteMessage(websocket.TextMessage, message)
+// 		if err != nil {
+// 			logrus.WithError(err).Error("Error writing message to WebSocket")
+// 			continue
+// 		}
+// 	}
+// }
+
+// Register client in Redis
+// func (h *WsHandler) registerClientInRedis(clientID, serverID string) {
+// 	h.redisClient.HSet(ctx, "ws_clients", clientID, serverID)
+// }
+
+// Unregister client from Redis
+// func (h *WsHandler) unregisterClientFromRedis(clientID string) {
+// 	h.redisClient.HDel(ctx, "ws_clients", clientID)
+// }
+
+// Publish message to Redis
+// func (h *WsHandler) publishToRedis(senderID string, message []byte) {
+// 	err := redisClient.Publish(ctx, redisChannel, string(message)).Err()
+// 	if err != nil {
+// 		log.Println("Failed to publish message:", err)
+// 	}
+// }
+
+// // Subscribe to Redis channel
+// func (h *WsHandler) subscribeToRedis() {
+// 	pubsub := redisClient.Subscribe(ctx, redisChannel)
+// 	defer pubsub.Close()
+
+// 	for {
+// 		msg, err := pubsub.ReceiveMessage(ctx)
+// 		if err != nil {
+// 			log.Println("Failed to receive message:", err)
+// 			continue
+// 		}
+
+// 		// Broadcast received message locally
+// 		broadcastMessageLocally([]byte(msg.Payload))
+// 	}
+// }

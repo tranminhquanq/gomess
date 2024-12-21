@@ -34,6 +34,7 @@ func (t *Time) UnmarshalText(text []byte) error {
 }
 
 type APIConfiguration struct {
+	ID                 string `json:"id" envconfig:"API_ID" required:"true"`
 	Host               string
 	Port               string `envconfig:"PORT" default:"9999"`
 	Endpoint           string
