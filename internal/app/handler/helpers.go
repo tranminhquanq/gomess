@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"github.com/tranminhquanq/gomess/internal/utils"
 )
 
 func sendJSON(w http.ResponseWriter, status int, obj interface{}) error {
@@ -60,5 +61,29 @@ func NewPaginationResponse[T any](data T, meta PaginationMeta) PaginationRespons
 	return PaginationResponse[T]{
 		Data: data,
 		Meta: meta,
+	}
+}
+
+func WsSuccessResponse(action WsAction, data interface{}) *WsResponse {
+	return &WsResponse{
+		Version:   "1.0",
+		Status:    "success",
+		Action:    action,
+		Timestamp: utils.CurrentTimestamp("seconds"),
+		Data:      data,
+	}
+}
+
+func WsErrorResponse(action WsAction, code int, message, details string) *WsResponse {
+	return &WsResponse{
+		Version:   "1.0",
+		Status:    "error",
+		Action:    action,
+		Timestamp: utils.CurrentTimestamp("seconds"),
+		Error: &WsError{
+			Code:    code,
+			Message: message,
+			Details: details,
+		},
 	}
 }
