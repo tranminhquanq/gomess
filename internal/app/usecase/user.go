@@ -16,8 +16,8 @@ func NewUserUsecase(repository repository.UserRepository) *UserUsecase {
 	}
 }
 
-func (u *UserUsecase) UserDetails() (domain.User, error) {
-	user, err := u.repository.FindUserById(uuid.FromStringOrNil("73f8606b-78ba-4e43-9fcd-e2a50db4cd71")) // TODO: get user id from context or request
+func (u *UserUsecase) UserDetails(userId string) (domain.User, error) {
+	user, err := u.repository.FindUserById(uuid.FromStringOrNil(userId))
 	return user, err
 }
 

@@ -86,7 +86,7 @@ func NewHandlerWithVersion(
 
 		r.Route("/users", func(r *router) {
 			r.Get("/", userHandler.GetUsers)
-			r.Get("/{userId}", userHandler.GetUser)
+			r.Get("/{userId}", userHandler.GetUserDetails)
 			r.Get("/me", userHandler.GetCurrentUser)
 		})
 	})
