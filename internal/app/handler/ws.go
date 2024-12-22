@@ -49,20 +49,23 @@ type WsClient struct {
 }
 
 type WsHandler struct {
-	userUsecase  *usecase.UserUsecase
-	serverId     string
-	localClients sync.Map // Stores active connections on this server
-	upgrader     websocket.Upgrader
+	serverId string
 	// redisClient *redis.Client
+	localClients sync.Map
+	upgrader     websocket.Upgrader
+	userUsecase  *usecase.UserUsecase
+	chatUsecase  *usecase.ChatUsecase
 }
 
 // NewWsHandler creates a new WebSocket handler
 func NewWsHandler(
 	globalConfig *config.GlobalConfiguration,
-	userUsecase *usecase.UserUsecase) *WsHandler {
+	userUsecase *usecase.UserUsecase,
+	chatUsecase *usecase.ChatUsecase,
+) *WsHandler {
 	return &WsHandler{
-		userUsecase:  userUsecase,
-		serverId:     globalConfig.API.ID,
+		serverId: globalConfig.API.ID,
+		// redisClient: redisClient,
 		localClients: sync.Map{},
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -72,6 +75,8 @@ func NewWsHandler(
 				return true
 			},
 		},
+		userUsecase: userUsecase,
+		chatUsecase: chatUsecase,
 	}
 }
 
@@ -145,6 +150,9 @@ func (h *WsHandler) Broadcast2AllLocalClients(clientId string, message []byte) {
 
 	// Publish message to Redis
 	// publishToRedis(clientId, message)
+}
+
+func (h *WsHandler) Broadcast2SpecificChannel(channelId, message []byte) {
 }
 
 // func (h *WsHandler) broadcastMessage2SpecificClients(clientIds []string, message []byte) {

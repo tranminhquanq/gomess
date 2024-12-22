@@ -70,6 +70,14 @@ func HandleResponseError(err error, w http.ResponseWriter, r *http.Request) {
 			logrus.WithError(e.Cause()).Info(e.Error())
 		}
 
+		if e.ErrorCode != "" {
+			w.Header().Set("x-error-code", e.ErrorCode)
+		}
+
+		if jsonErr := sendJSON(w, e.HTTPStatus, e); jsonErr != nil && jsonErr != context.DeadlineExceeded {
+			logrus.WithError(jsonErr).Warn("Failed to send JSON on ResponseWriter")
+		}
+
 	case ErrorCause:
 		HandleResponseError(e.Cause(), w, r)
 
@@ -118,3 +126,23 @@ type ErrorCause interface {
 // 	left := timeStamp.Add(maxFrequency).Sub(now) / time.Second
 // 	return fmt.Sprintf("For security purposes, you can only request this after %d seconds.", left)
 // }
+
+func httpError(httpStatus int, errorCode ErrorCode, fmtString string, args ...interface{}) *HTTPError {
+	return &HTTPError{
+		HTTPStatus: httpStatus,
+		ErrorCode:  errorCode,
+		Message:    fmt.Sprintf(fmtString, args...),
+	}
+}
+
+func forbiddenError(errorCode ErrorCode, fmtString string, args ...interface{}) *HTTPError {
+	return httpError(http.StatusForbidden, errorCode, fmtString, args...)
+}
+
+func internalServerError(fmtString string, args ...interface{}) *HTTPError {
+	return httpError(http.StatusInternalServerError, ErrorCodeUnexpectedFailure, fmtString, args...)
+}
+
+func badRequestError(errorCode ErrorCode, fmtString string, args ...interface{}) *HTTPError {
+	return httpError(http.StatusBadRequest, errorCode, fmtString, args...)
+}

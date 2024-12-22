@@ -95,6 +95,20 @@ func (c *DBConfiguration) Validate() error {
 	return nil
 }
 
+// JWTConfiguration holds all the JWT related configuration.
+type JWTConfiguration struct {
+	Secret           string         `json:"secret" required:"true"`
+	Exp              int            `json:"exp"`
+	Aud              string         `json:"aud"`
+	AdminGroupName   string         `json:"admin_group_name" split_words:"true"`
+	AdminRoles       []string       `json:"admin_roles" split_words:"true"`
+	DefaultGroupName string         `json:"default_group_name" split_words:"true"`
+	Issuer           string         `json:"issuer"`
+	KeyID            string         `json:"key_id" split_words:"true"`
+	Keys             JwtKeysDecoder `json:"keys"`
+	ValidMethods     []string       `json:"-"`
+}
+
 // GlobalConfiguration holds all the configuration that applies to all instances.
 type GlobalConfiguration struct {
 	API     APIConfiguration
@@ -106,6 +120,7 @@ type GlobalConfiguration struct {
 	SiteURL         string   `json:"site_url" split_words:"true" required:"true"`
 	URIAllowList    []string `json:"uri_allow_list" split_words:"true"`
 	URIAllowListMap map[string]glob.Glob
+	JWT             JWTConfiguration `json:"jwt"`
 }
 
 // ApplyDefaults sets defaults for a GlobalConfiguration

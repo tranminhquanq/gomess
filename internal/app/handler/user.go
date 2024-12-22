@@ -5,17 +5,22 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/tranminhquanq/gomess/internal/app/usecase"
+	"github.com/tranminhquanq/gomess/internal/config"
 	"github.com/tranminhquanq/gomess/internal/utils"
 )
 
 type UserHandler struct {
-	userUsecase *usecase.UserUsecase
+	globalConfig *config.GlobalConfiguration
+	userUsecase  *usecase.UserUsecase
 	// TODO: Add other usecases here
 }
 
-func NewUserHandler(userUsecase *usecase.UserUsecase) *UserHandler {
+func NewUserHandler(
+	globalConfig *config.GlobalConfiguration,
+	userUsecase *usecase.UserUsecase) *UserHandler {
 	return &UserHandler{
-		userUsecase: userUsecase,
+		globalConfig: globalConfig,
+		userUsecase:  userUsecase,
 	}
 }
 
@@ -33,8 +38,20 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) error {
-	userId := chi.URLParam(r, "userId") // TODO: Get user from token instead of URL
-	user, err := h.userUsecase.UserDetails(userId)
+	ctx := r.Context()
+	claims := getClaims(ctx)
+
+	if claims == nil {
+		return internalServerError("No claims found in context")
+	}
+
+	aud := h.requestAud(ctx, r)
+	audienceFromClaims, _ := claims.GetAudience()
+	if len(audienceFromClaims) == 0 || aud != audienceFromClaims[0] {
+		return badRequestError(ErrorCodeValidationFailed, "Token audience doesn't match request audience")
+	}
+
+	user, err := h.userUsecase.UserDetails(claims.ID)
 	if err != nil {
 		return sendJSON(w, http.StatusInternalServerError, err)
 	}

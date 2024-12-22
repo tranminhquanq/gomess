@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -86,4 +87,21 @@ func WsErrorResponse(action WsAction, code int, message, details string) *WsResp
 			Details: details,
 		},
 	}
+}
+
+func (h *UserHandler) requestAud(ctx context.Context, r *http.Request) string {
+	if aud := r.Header.Get(audHeaderName); aud != "" {
+		return aud
+	}
+
+	claims := getClaims(ctx)
+
+	if claims != nil {
+		aud, _ := claims.GetAudience()
+		if len(aud) != 0 && aud[0] != "" {
+			return aud[0]
+		}
+	}
+
+	return h.globalConfig.JWT.Aud
 }

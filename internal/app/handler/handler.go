@@ -66,12 +66,12 @@ func NewHandlerWithVersion(
 
 	userRepository := repository.NewUserRepository(db)
 
-	authUsecase := usecase.NewAuthUsecase(userRepository)
+	chatUsecase := usecase.NewChatUsecase()
 	userUsecase := usecase.NewUserUsecase(userRepository)
 
-	wsHandler := NewWsHandler(globalConfig, userUsecase)
-	authHandler := NewAuthHandler(authUsecase, userUsecase)
-	userHandler := NewUserHandler(userUsecase)
+	wsHandler := NewWsHandler(globalConfig, userUsecase, chatUsecase)
+	authHandler := NewAuthHandler(globalConfig, userUsecase)
+	userHandler := NewUserHandler(globalConfig, userUsecase)
 
 	r.Get("/health", api.HealthCheck)
 
@@ -84,7 +84,7 @@ func NewHandlerWithVersion(
 			r.Post("/forgot-password", authHandler.ForgotPassword)
 		})
 
-		r.Route("/users", func(r *router) {
+		r.With(api.requireAuthentication).Route("/users", func(r *router) {
 			r.Get("/", userHandler.GetUsers)
 			r.Get("/{userId}", userHandler.GetUserDetails)
 			r.Get("/me", userHandler.GetCurrentUser)

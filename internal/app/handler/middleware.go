@@ -3,12 +3,18 @@ package handler
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
+	"regexp"
 	"sync"
 	"time"
 
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
+	"github.com/tranminhquanq/gomess/internal/config"
 )
+
+var bearerRegexp = regexp.MustCompile(`^(?:B|b)earer (\S+$)`)
 
 // timeoutResponseWriter is a http.ResponseWriter that queues up a response
 // body to be sent if the serving completes before the context has exceeded its
@@ -133,4 +139,55 @@ func timeoutMiddleware(timeout time.Duration) func(http.Handler) http.Handler {
 			}
 		})
 	}
+}
+
+func extractBearerToken(r *http.Request) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+	matches := bearerRegexp.FindStringSubmatch(authHeader)
+	if len(matches) != 2 {
+		return "", httpError(http.StatusUnauthorized, ErrorCodeNoAuthorization, "Invalid Authorization header")
+	}
+
+	return matches[1], nil
+}
+
+func (h *Handler) parseJWTClaims(tokenString string, r *http.Request) (context.Context, error) {
+	ctx := r.Context()
+
+	p := jwt.NewParser(jwt.WithValidMethods(h.globalConfig.JWT.ValidMethods))
+	token, err := p.ParseWithClaims(tokenString, &AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if kid, ok := token.Header["kid"]; ok {
+			if kidStr, ok := kid.(string); ok {
+				return config.FindPublicKeyByKid(kidStr, &h.globalConfig.JWT)
+			}
+		}
+		if alg, ok := token.Header["alg"]; ok {
+			if alg == jwt.SigningMethodHS256.Name {
+				// preserve backward compatibility for cases where the kid is not set
+				return []byte(h.globalConfig.JWT.Secret), nil
+			}
+		}
+		return nil, fmt.Errorf("missing kid")
+	})
+
+	if err != nil {
+		return nil, forbiddenError(ErrorCodeBadJWT, "invalid JWT: unable to parse or verify signature, %v", err).WithInternalError(err)
+	}
+
+	return withToken(ctx, token), nil
+}
+
+// requireAuthentication checks incoming requests for tokens presented using the Authorization header
+func (h *Handler) requireAuthentication(w http.ResponseWriter, r *http.Request) (context.Context, error) {
+	token, err := extractBearerToken(r)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, err := h.parseJWTClaims(token, r)
+	if err != nil {
+		return nil, err
+	}
+
+	return ctx, err
 }

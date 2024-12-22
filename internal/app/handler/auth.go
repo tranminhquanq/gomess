@@ -4,17 +4,20 @@ import (
 	"net/http"
 
 	"github.com/tranminhquanq/gomess/internal/app/usecase"
+	"github.com/tranminhquanq/gomess/internal/config"
 )
 
 type AuthHandler struct {
-	authUsecase *usecase.AuthUsecase
-	userUsecase *usecase.UserUsecase
+	globalConfig *config.GlobalConfiguration
+	userUsecase  *usecase.UserUsecase
 }
 
-func NewAuthHandler(authUsecase *usecase.AuthUsecase, userUsecase *usecase.UserUsecase) *AuthHandler {
+func NewAuthHandler(
+	globalConfig *config.GlobalConfiguration,
+	userUsecase *usecase.UserUsecase) *AuthHandler {
 	return &AuthHandler{
-		authUsecase: authUsecase,
-		userUsecase: userUsecase,
+		globalConfig: globalConfig,
+		userUsecase:  userUsecase,
 	}
 }
 
