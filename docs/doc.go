@@ -1,6 +1,6 @@
-// Package classification gotrue
+// Package classification gomes
 //
-// Documentation of the gotrue API.
+// Documentation of the gomes API.
 //
 //	Schemes: http, https
 //	BasePath: /

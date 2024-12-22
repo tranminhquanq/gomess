@@ -5,7 +5,7 @@ import "context"
 type contextKey string
 
 func (c contextKey) String() string {
-	return "gotrue api context key " + string(c)
+	return "gomess api context key " + string(c)
 }
 
 const (
