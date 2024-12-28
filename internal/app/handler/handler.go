@@ -99,7 +99,7 @@ func NewHandlerWithVersion(
 	})
 
 	api.handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.Path == "/ws" {
+		if req.URL.Path == "/apiws" {
 			wsHandler.ServeWs(w, req)
 		} else {
 			corsHandler.Handler(r).ServeHTTP(w, req)
