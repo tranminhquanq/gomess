@@ -52,8 +52,8 @@ type User struct {
 	// Factors    []Factor   `json:"factors,omitempty" has_many:"factors"`
 	// Identities []Identity `json:"identities" has_many:"identities"`
 
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	CreatedAt time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at" db:"updated_at"`
 	// BannedUntil *time.Time `json:"banned_until,omitempty" db:"banned_until"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
 	// IsAnonymous bool       `json:"is_anonymous" db:"is_anonymous"`
