@@ -43,6 +43,18 @@ type Conversation struct {
 	UpdatedAt *time.Time       `json:"updated_at" db:"updated_at"`
 }
 
+func (c *Conversation) IsCreator(userID int64) bool {
+	return c.CreatorID == userID
+}
+
+func (c *Conversation) IsSingle() bool {
+	return c.Type == ConversationTypeSingle
+}
+
+func (c *Conversation) IsGroup() bool {
+	return c.Type == ConversationTypeGroup
+}
+
 func (u *Conversation) TableName() string {
 	return "conversations"
 }
